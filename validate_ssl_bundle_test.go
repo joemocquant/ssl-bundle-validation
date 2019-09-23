@@ -20,7 +20,7 @@ func TestValidateSSLBundle(t *testing.T) {
 		},
 	)
 
-	cc := validateSSLBundle(bd.bundle, "example1.com", pemPK)
+	cc := ValidateSSLBundle(bd.bundle, "example1.com", pemPK)
 	assert.Equal(t, 1, len(cc.chains))
 	assert.Equal(t, true, reflect.DeepEqual(cc.chains[0], []int{2, 1, 0}))
 	assert.Equal(t, 0, len(cc.bundleError.chainsWithNoRoot))

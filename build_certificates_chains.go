@@ -32,9 +32,9 @@ type certChains struct {
 // trust because it was delivered to you by some trustworthy procedure.
 //
 // More info at:
-// - https://en.wikipedia.org/wiki/X.509#Certificate_chains_and_cross-certification
-// - https://tools.ietf.org/html/rfc5280
-// - http://www.oasis-pki.org/pdfs/Understanding_Path_construction-DS2.pdf
+// - https://en.wikipedia.org/wiki/X.509#Certificate_chains_and_cross-certification.
+// - https://tools.ietf.org/html/rfc5280.
+// - http://www.oasis-pki.org/pdfs/Understanding_Path_construction-DS2.pdf.
 func buildCertificateChains(
 	pb *parsedBundle,
 	hostname string,
@@ -197,7 +197,7 @@ func findRoots(certs map[int]*x509.Certificate) map[int]bool {
 //
 // Any root certficate must be:
 // - self-signed and having issuer and subject equal.
-// More info at https://tools.ietf.org/html/rfc5280#section-4.2.1.9
+// More info at https://tools.ietf.org/html/rfc5280#section-4.2.1.9.
 func isRoot(cert *x509.Certificate) bool {
 
 	isSelfSigned := func(cert *x509.Certificate) bool {

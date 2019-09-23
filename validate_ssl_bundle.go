@@ -7,9 +7,9 @@ type sslBundleError struct {
 	expiredChains    map[int]bool
 }
 
-// validateSSLBundle validate a pem encoded bundle against
-// a pem encoded private key and a hostname
-func validateSSLBundle(bundle []byte, hostname string, privateKey []byte) *certChains {
+// ValidateSSLBundle validate a PEM encoded bundle against
+// a PEM encoded private key and a hostname
+func ValidateSSLBundle(bundle []byte, hostname string, privateKey []byte) *certChains {
 
 	parsedBundle := parseSSLBundle(bundle)
 	cc := buildCertificateChains(parsedBundle, hostname, privateKey)
@@ -22,7 +22,7 @@ func validateSSLBundle(bundle []byte, hostname string, privateKey []byte) *certC
 	return cc
 }
 
-// pathsValidation detects invalid chains
+// pathsValidation flags chains according to specific criteria.
 func (cc *certChains) pathsValidation() {
 	cc.flagChainsWithNoRoot()
 	cc.flagExpiredChains()
@@ -36,7 +36,7 @@ func (cc *certChains) pathsValidation() {
 }
 
 // flagChainsWithNoRoot flags chains not ending
-// with a root certificate
+// with a root certificate.
 func (cc *certChains) flagChainsWithNoRoot() {
 	for i, chain := range cc.chains {
 		if !cc.roots[chain[len(chain)-1]] {
@@ -46,7 +46,7 @@ func (cc *certChains) flagChainsWithNoRoot() {
 }
 
 // flagExpiredChains flags chains with expired
-// certificate(s)
+// certificate(s).
 func (cc *certChains) flagExpiredChains() {
 
 	now := time.Now()
