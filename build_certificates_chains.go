@@ -8,14 +8,16 @@ import (
 	"sync"
 )
 
-type certChains struct {
-	pb          *parsedBundle
-	chains      [][]int
-	hasNoLeaf   bool
-	hasNoRoot   bool
-	roots       map[int]bool
-	leaves      []int
-	bundleError *sslBundleError
+// CertChains contains the information to be returned
+// to the consumer of the module.
+type CertChains struct {
+	Pb        *ParsedBundle
+	Chains    [][]int
+	HasNoLeaf bool
+	HasNoRoot bool
+	roots     map[int]bool
+	leaves    []int
+	Fc        *FlaggedChains
 }
 
 // buildCertificateChains build chains of certificates by ensuring that for each chain:
@@ -36,32 +38,32 @@ type certChains struct {
 // - https://tools.ietf.org/html/rfc5280.
 // - http://www.oasis-pki.org/pdfs/Understanding_Path_construction-DS2.pdf.
 func buildCertificateChains(
-	pb *parsedBundle,
+	Pb *ParsedBundle,
 	hostname string,
 	privateKey []byte,
-) *certChains {
+) *CertChains {
 
-	certs := pb.certs.certs
-	cc := &certChains{
-		pb:     pb,
+	certs := Pb.certs.certs
+	cc := &CertChains{
+		Pb:     Pb,
 		roots:  findRoots(certs),
-		leaves: findLeaves(certs, hostname, privateKey, pb.pemCerts),
+		leaves: findLeaves(certs, hostname, privateKey, Pb.pemCerts),
 	}
 
 	if len(cc.leaves) == 0 {
-		cc.hasNoLeaf = true
+		cc.HasNoLeaf = true
 	}
 
 	if len(cc.roots) == 0 {
-		cc.hasNoRoot = true
+		cc.HasNoRoot = true
 	}
 
-	if cc.hasNoLeaf || cc.hasNoRoot {
+	if cc.HasNoLeaf || cc.HasNoRoot {
 		return cc
 	}
 
 	nodes := buildNodes(certs)
-	cc.chains = buildChainsFrom(-1, cc.leaves, nodes)
+	cc.Chains = buildChainsFrom(-1, cc.leaves, nodes)
 
 	return cc
 }

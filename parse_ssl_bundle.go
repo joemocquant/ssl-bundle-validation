@@ -15,43 +15,49 @@ const (
 	publicKey blockType = "PUBLIC KEY"
 )
 
-type parsedBundle struct {
-	be       *bundleError
+// ParsedBundle contains the certificates and errors
+// encoutered during bundle parsing.
+type ParsedBundle struct {
+	Be       *BundleError
 	certs    *certificates
 	pemCerts map[int]*pem.Block
 }
 
-type bundleError struct {
-	berrs blockErrors
-	cerrs *certErrors
+// BundleError provides the errors recorded
+// at PEM Block level and PEM encoded certificate level.
+type BundleError struct {
+	Berrs BlockErrors
+	Cerrs *CertErrors
 }
 
-// blockErrors is a map to handle PEM block errors.
-type blockErrors map[int]*blockError
+// BlockErrors is a map to handle PEM block errors.
+type BlockErrors map[int]*BlockError
 
-type blockError struct {
+// BlockError provides the error for a PEM Block.
+type BlockError struct {
 	IsNotCertificate    bool
-	blockContainsHeader bool
+	BlockContainsHeader bool
 }
 
-// certErrors is a concurrent map to handle certificate errors.
-type certErrors struct {
+// CertErrors is a concurrent map to handle certificate errors.
+type CertErrors struct {
 	*sync.Mutex
-	errs map[int]*certError
+	Errs map[int]*CertError
 }
 
-type certError struct {
-	parseErr error
+// CertError provides the error for a PEM encoded certificate.
+type CertError struct {
+	ParseErr error
 }
 
-func (cerrs *certErrors) addParseError(i int, err error) {
+func (cerrs *CertErrors) addParseError(i int, err error) {
 	cerrs.Lock()
 	defer cerrs.Unlock()
 
-	if cerrs.errs == nil {
-		cerrs.errs = make(map[int]*certError)
+	if cerrs.Errs == nil {
+		cerrs.Errs = make(map[int]*CertError)
 	}
-	cerrs.errs[i] = &certError{parseErr: err}
+	cerrs.Errs[i] = &CertError{ParseErr: err}
 }
 
 // certificates is a concurrent map to handle x509 certificates.
@@ -73,17 +79,17 @@ func (certs *certificates) addCertificate(i int, cert *x509.Certificate) {
 // parseSSLBundle parses the SSL bundle provided and returns
 // an array of matching x509 certificates. It also returns any
 // errors encountered.
-func parseSSLBundle(bundle []byte) *parsedBundle {
+func parseSSLBundle(bundle []byte) *ParsedBundle {
 
 	pemCerts, berrs := extractPEMCerts(bundle)
 	certs, cerrs := parsePEMCertificates(pemCerts)
 
-	return &parsedBundle{&bundleError{berrs, cerrs}, certs, pemCerts}
+	return &ParsedBundle{&BundleError{berrs, cerrs}, certs, pemCerts}
 }
 
 // extractPEMCerts decodes the SSL bundle provided into an array of PEM
 // Certs. It also returns any errors encountered during decoding.
-func extractPEMCerts(bundle []byte) (map[int]*pem.Block, blockErrors) {
+func extractPEMCerts(bundle []byte) (map[int]*pem.Block, BlockErrors) {
 	return extractPEMValues(bundle, []blockType{certificate})
 }
 
@@ -93,10 +99,10 @@ func extractPEMCerts(bundle []byte) (map[int]*pem.Block, blockErrors) {
 func extractPEMValues(
 	bundle []byte,
 	allowedBlockTypes []blockType,
-) (map[int]*pem.Block, blockErrors) {
+) (map[int]*pem.Block, BlockErrors) {
 
 	pemValues := make(map[int]*pem.Block)
-	berrs := make(blockErrors)
+	berrs := make(BlockErrors)
 
 	blockCount := -1
 
@@ -118,11 +124,11 @@ func extractPEMValues(
 		}
 		blockCount++
 		if !isBlockAllowed(blockType(block.Type), allowedBlockTypes) {
-			berrs[blockCount] = &blockError{true, false}
+			berrs[blockCount] = &BlockError{true, false}
 		}
 
 		if len(block.Headers) != 0 {
-			berrs[blockCount] = &blockError{false, true}
+			berrs[blockCount] = &BlockError{false, true}
 		}
 
 		if _, ok := berrs[blockCount]; ok {
@@ -137,10 +143,10 @@ func extractPEMValues(
 
 // parsePEMCertificates parses the PEM certificates provided
 // concurrently. It also returns any errors encountered during parsing.
-func parsePEMCertificates(pemCerts map[int]*pem.Block) (*certificates, *certErrors) {
+func parsePEMCertificates(pemCerts map[int]*pem.Block) (*certificates, *CertErrors) {
 
 	var certs = &certificates{&sync.Mutex{}, nil}
-	cerrs := &certErrors{&sync.Mutex{}, nil}
+	cerrs := &CertErrors{&sync.Mutex{}, nil}
 
 	wg := &sync.WaitGroup{}
 

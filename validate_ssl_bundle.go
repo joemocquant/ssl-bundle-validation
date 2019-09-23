@@ -2,28 +2,29 @@ package sslbundle
 
 import "time"
 
-type sslBundleError struct {
-	chainsWithNoRoot map[int]bool
-	expiredChains    map[int]bool
+// FlaggedChains contains the flagged chains.
+type FlaggedChains struct {
+	ChainsWithNoRoot map[int]bool
+	ExpiredChains    map[int]bool
 }
 
 // ValidateSSLBundle validate a PEM encoded bundle against
-// a PEM encoded private key and a hostname
-func ValidateSSLBundle(bundle []byte, hostname string, privateKey []byte) *certChains {
+// a PEM encoded private key and a hostname.
+func ValidateSSLBundle(bundle []byte, hostname string, privateKey []byte) *CertChains {
 
 	parsedBundle := parseSSLBundle(bundle)
 	cc := buildCertificateChains(parsedBundle, hostname, privateKey)
 
-	cc.bundleError = &sslBundleError{
-		chainsWithNoRoot: make(map[int]bool),
-		expiredChains:    make(map[int]bool),
+	cc.Fc = &FlaggedChains{
+		ChainsWithNoRoot: make(map[int]bool),
+		ExpiredChains:    make(map[int]bool),
 	}
 	cc.pathsValidation()
 	return cc
 }
 
 // pathsValidation flags chains according to specific criteria.
-func (cc *certChains) pathsValidation() {
+func (cc *CertChains) pathsValidation() {
 	cc.flagChainsWithNoRoot()
 	cc.flagExpiredChains()
 
@@ -37,26 +38,26 @@ func (cc *certChains) pathsValidation() {
 
 // flagChainsWithNoRoot flags chains not ending
 // with a root certificate.
-func (cc *certChains) flagChainsWithNoRoot() {
-	for i, chain := range cc.chains {
+func (cc *CertChains) flagChainsWithNoRoot() {
+	for i, chain := range cc.Chains {
 		if !cc.roots[chain[len(chain)-1]] {
-			cc.bundleError.chainsWithNoRoot[i] = true
+			cc.Fc.ChainsWithNoRoot[i] = true
 		}
 	}
 }
 
 // flagExpiredChains flags chains with expired
 // certificate(s).
-func (cc *certChains) flagExpiredChains() {
+func (cc *CertChains) flagExpiredChains() {
 
 	now := time.Now()
 
-	for i, chain := range cc.chains {
+	for i, chain := range cc.Chains {
 
 		for _, k := range chain {
-			cert := cc.pb.certs.certs[k]
+			cert := cc.Pb.certs.certs[k]
 			if now.Before(cert.NotBefore) || now.After(cert.NotAfter) {
-				cc.bundleError.expiredChains[i] = true
+				cc.Fc.ExpiredChains[i] = true
 				break
 			}
 		}

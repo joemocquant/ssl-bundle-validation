@@ -93,8 +93,8 @@ func TestParseSSLBundle(t *testing.T) {
 
 	bd := buildBundle(t)
 	pb := parseSSLBundle(bd.bundle)
-	assert.Equal(t, 0, len(pb.be.berrs))
-	assert.Equal(t, 0, len(pb.be.cerrs.errs))
+	assert.Equal(t, 0, len(pb.Be.Berrs))
+	assert.Equal(t, 0, len(pb.Be.Cerrs.Errs))
 	assert.Equal(t, 5, len(pb.certs.certs))
 	assert.Equal(t, 5, len(pb.pemCerts))
 }
@@ -198,7 +198,7 @@ func TestParsePEMCertificates(t *testing.T) {
 			pemCerts, _ := extractPEMCerts(tc.bundle)
 			gotCerts, gotCertErrors := parsePEMCertificates(pemCerts)
 			assert.Equal(t, tc.wantCertCount, len(gotCerts.certs))
-			assert.Equal(t, tc.wantErrorCount, len(gotCertErrors.errs))
+			assert.Equal(t, tc.wantErrorCount, len(gotCertErrors.Errs))
 		})
 	}
 }
